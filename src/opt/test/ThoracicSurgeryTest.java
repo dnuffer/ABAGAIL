@@ -21,21 +21,21 @@ import java.text.*;
 public class ThoracicSurgeryTest {
     private static Instance[] instances = initializeInstances();
 
-    private static int inputLayer = 24, hiddenLayer = 9, outputLayer = 1, trainingIterations = 100;
+    private static int inputLayer = 24, hiddenLayer = 9, outputLayer = 1, trainingIterations = 1000;
     private static BackPropagationNetworkFactory factory = new BackPropagationNetworkFactory();
     
     private static ErrorMeasure measure = new SumOfSquaresError();
 
     private static DataSet set = new DataSet(instances);
 
-    private static int numAlgs = 5;
-    private static int numRuns = 3;
+    private static int numAlgs = 7;
+    private static int numRuns = 30;
     private static double classThreshold = 0.5;
     private static BackPropagationNetwork networks[] = new BackPropagationNetwork[numAlgs * numRuns];
     private static NeuralNetworkOptimizationProblem[] nnop = new NeuralNetworkOptimizationProblem[numAlgs * numRuns];
 
     private static OptimizationAlgorithm[] oa = new OptimizationAlgorithm[numAlgs * numRuns];
-    private static String[] oaNames = {"RHC", "SA1E11_95", "SA1E11_99", "GA200_100_10", "GA200_190_10"};
+    private static String[] oaNames = {"RHC", "RHCWR_25", "RHCWR_100", "SA_1E11_95", "SA_1E11_99", "GA_200_100_10", "GA_200_190_10"};
     private static String results = "";
 
     private static DecimalFormat df = new DecimalFormat("0.000");
@@ -53,12 +53,14 @@ public class ThoracicSurgeryTest {
             nnop[i] = new NeuralNetworkOptimizationProblem(set, networks[i], measure);
         }
 
-        for(int i = 0; i < oa.length; i+=numAlgs) {
-	        oa[i+0] = new RandomizedHillClimbing(nnop[i+0]);
-	        oa[i+1] = new SimulatedAnnealing(1E11, .95, nnop[i+1]);
-	        oa[i+2] = new SimulatedAnnealing(1E11, .99, nnop[i+2]);
-	        oa[i+3] = new StandardGeneticAlgorithm(200, 100, 10, nnop[i+3]);
-	        oa[i+4] = new StandardGeneticAlgorithm(200, 190, 10, nnop[i+4]);
+        for(int i = 0; i < oa.length; ) {
+	        oa[i] = new RandomizedHillClimbing(nnop[i]); i++;
+	        oa[i] = new RandomizedHillClimbingWithRestart(nnop[i], 25); i++;
+	        oa[i] = new RandomizedHillClimbingWithRestart(nnop[i], 100); i++;
+	        oa[i] = new SimulatedAnnealing(1E11, .95, nnop[i]); i++;
+	        oa[i] = new SimulatedAnnealing(1E11, .99, nnop[i]); i++;
+	        oa[i] = new StandardGeneticAlgorithm(200, 100, 10, nnop[i]); i++;
+	        oa[i] = new StandardGeneticAlgorithm(200, 190, 10, nnop[i]); i++;
         }
         
         for(int i = 0; i < oa.length; i++) {
