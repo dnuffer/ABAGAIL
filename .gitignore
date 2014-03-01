@@ -7,3 +7,5 @@ ABAGAIL.jar
 *.war
 *.ear
 manifest.mf
+ThoracicSurgeryUP_results.csv
+ThoracicSurgeryUP_traces.csv
