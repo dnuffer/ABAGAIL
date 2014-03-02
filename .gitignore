@@ -9,3 +9,5 @@ ABAGAIL.jar
 manifest.mf
 ThoracicSurgeryUP_results.csv
 ThoracicSurgeryUP_traces.csv
+!lib/
+!lib/*.jar
