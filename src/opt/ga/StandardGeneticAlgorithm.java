@@ -3,7 +3,6 @@ package opt.ga;
 import java.util.Random;
 
 import dist.DiscreteDistribution;
-
 import opt.OptimizationAlgorithm;
 import shared.Instance;
 
@@ -140,5 +139,15 @@ public class StandardGeneticAlgorithm extends OptimizationAlgorithm {
         }
         return population[best];
     }
+
+	@Override
+	public String getDescription() {
+		return "Standard Genetic Algorithm " + populationSize + " " + toMate + " " + toMutate;
+	}
+
+	@Override
+	public String getShortName() {
+		return "GA_" + populationSize + "_" + toMate + "_" + toMutate;
+	}
 
 }

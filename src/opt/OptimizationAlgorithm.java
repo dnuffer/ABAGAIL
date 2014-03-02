@@ -36,4 +36,14 @@ public abstract class OptimizationAlgorithm implements Trainer {
      */
     public abstract Instance getOptimal();
 
+    /**
+     * Get the descriptive name
+     */
+    public abstract String getDescription();
+     
+    /**
+     * Get a short code name
+     */
+    public abstract String getShortName();
+     
 }

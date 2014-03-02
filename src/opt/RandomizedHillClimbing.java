@@ -49,4 +49,14 @@ public class RandomizedHillClimbing extends OptimizationAlgorithm {
         return cur;
     }
 
+	@Override
+	public String getDescription() {
+		return "Randomized Hill Climbing";
+	}
+
+	@Override
+	public String getShortName() {
+		return "RHC";
+	}
+
 }

@@ -1,7 +1,6 @@
 package opt;
 
 import dist.Distribution;
-
 import shared.Instance;
 
 /**
@@ -67,5 +66,15 @@ public class SimulatedAnnealing extends OptimizationAlgorithm {
     public Instance getOptimal() {
         return cur;
     }
+
+	@Override
+	public String getDescription() {
+		return "Simulated Annealing " + cooling;
+	}
+
+	@Override
+	public String getShortName() {
+		return "SA_" + cooling;
+	}
 
 }

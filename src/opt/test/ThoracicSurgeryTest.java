@@ -21,7 +21,7 @@ import java.text.*;
 public class ThoracicSurgeryTest {
     private static Instance[] instances = initializeInstances();
 
-    private static int inputLayer = 24, hiddenLayer = 9, outputLayer = 1, trainingIterations = 1000;
+    private static int inputLayer = 24, hiddenLayer = 9, outputLayer = 1, trainingIterations = 100;
     private static BackPropagationNetworkFactory factory = new BackPropagationNetworkFactory();
     
     private static ErrorMeasure measure = new SumOfSquaresError();
@@ -29,7 +29,7 @@ public class ThoracicSurgeryTest {
     private static DataSet set = new DataSet(instances);
 
     private static int numAlgs = 7;
-    private static int numRuns = 30;
+    private static int numRuns = 3;
     private static double classThreshold = 0.5;
     private static BackPropagationNetwork networks[] = new BackPropagationNetwork[numAlgs * numRuns];
     private static NeuralNetworkOptimizationProblem[] nnop = new NeuralNetworkOptimizationProblem[numAlgs * numRuns];

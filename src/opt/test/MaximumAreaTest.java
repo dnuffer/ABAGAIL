@@ -1,7 +1,15 @@
 package opt.test;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Random;
+import java.util.List;
+import java.util.Scanner;
 
 import org.joda.time.Duration;
 
@@ -9,6 +17,7 @@ import dist.DiscreteDependencyTree;
 import dist.DiscretePermutationDistribution;
 import dist.DiscreteUniformDistribution;
 import dist.Distribution;
+import opt.OptimizationAlgorithm;
 import opt.RandomizedHillClimbingWithRestart;
 import opt.SwapNeighbor;
 import opt.GenericHillClimbingProblem;
@@ -35,93 +44,143 @@ import shared.*;
  * @version 1.0
  */
 public class MaximumAreaTest {
-    /** The n value */
-    private static final int N = 40; // TODO: increase?
-    /**
-     * The test main
-     * @param args ignored
-     */
-    public static void main(String[] args) {
-        Random random = new Random();
-        // create the random points
-        double[][] points = new double[N][2];
-        for (int i = 0; i < points.length; i++) {
-            points[i][0] = random.nextDouble();
-            points[i][1] = random.nextDouble();   
-        }
+	final static int NUM_PROBLEMS = 5;
+	final static int NUM_RUNS = 30, SECONDS = 5;
+	//final static int NUM_RUNS = 2, SECONDS = 1;
+	/**
+	 * The test main
+	 * 
+	 * @param args
+	 *            ignored
+	 * @throws IOException 
+	 */
+	public static void main(String[] args) throws IOException {
+
+		for (int p = 1; p <= NUM_PROBLEMS; p++) {
+			String problemName = "MaximumAreaTest_" + p * 10;
+			String problemDataFilename = problemName + ".csv";
+			double[][] points = loadProblem(problemDataFilename);
+			System.out.println("Loaded " + problemDataFilename + " " + points.length);
+			doProblem(points, problemName);
+		}
+	}
+
+	static double[] toDoubleArray(List<Double> list)  {
+	    double[] ret = new double[list.size()];
+	    int i = 0;
+	    for (Double e : list)  
+	        ret[i++] = e.doubleValue();
+	    return ret;
+	}	
+	
+	static double[][] toDoubleArrayArray(List<List<Double>> list)  {
+	    double[][] ret = new double[list.size()][];
+	    int i = 0;
+	    for (List<Double> e : list)  
+	        ret[i++] = toDoubleArray(e);
+	    return ret;
+	}	
+	
+	private static double[][] loadProblem(String problemDataFilename) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(new File(problemDataFilename)));
+		try {
+			ArrayList<List<Double>> results = new ArrayList<List<Double>>();
+			// skip CSV column names
+			String line = br.readLine();
+
+			while ((line = br.readLine()) != null) {
+				Scanner scan = new Scanner(line);
+				scan.useDelimiter(",");
+
+				ArrayList<Double> lineArray = new ArrayList<Double>();
+				results.add(lineArray);
+
+				while (scan.hasNext())
+					lineArray.add(Double.parseDouble(scan.next()));
+			}
+			return toDoubleArrayArray(results);			
+		} finally {
+			br.close();
+		}
+	}
+
+	private static void doProblem(double[][] points, String problemName) throws FileNotFoundException {
+		int N = points.length;
+
+		PrintWriter results_csv = new PrintWriter(problemName + "_results.csv");
+        results_csv.print("Algorithm,Run,Fitness,Time,Iterations,BestIteration,SecondsPerIteration\n");
         
-        // for rhc, sa, and ga we use a permutation based encoding
-        MaximumAreaEvaluationFunction ef = new MaximumAreaEvaluationFunction(points, N/2);
-        Distribution odd = new DiscretePermutationDistribution(N);
-        NeighborFunction nf = new SwapNeighbor();
-        MutationFunction mf = new SwapMutation();
-        CrossoverFunction cf = new OrderedCrossOver(N);
-        HillClimbingProblem hcp = new GenericHillClimbingProblem(ef, odd, nf);
-        GeneticAlgorithmProblem gap = new GenericGeneticAlgorithmProblem(ef, odd, mf, cf);
-        
-        System.out.println("Starting Randomized Hill Climbing");
-        RandomizedHillClimbing rhc = new RandomizedHillClimbing(hcp);      
-        TimeLimitTrainer fit = new TimeLimitTrainer(new OccasionalPrinter(rhc, Duration.standardSeconds(1)), Duration.standardSeconds(5)); //new ConvergenceTrainer(rhc, 1e-10, 20000000, 10000); //new FixedIterationTrainer(rhc, 200000);
-        fit.train();
-        System.out.println("Randomized Hill Climbing optimal: " + ef.value(rhc.getOptimal()));
-        System.out.println("Best iteration: " + fit.getBestIteration());
-        
-        System.out.println("Starting Randomized Hill Climbing with Restart");
-        RandomizedHillClimbingWithRestart rhcwr = new RandomizedHillClimbingWithRestart(hcp, 6000);      
-        fit = new TimeLimitTrainer(new OccasionalPrinter(rhcwr, Duration.standardSeconds(1)), Duration.standardSeconds(5)); //new ConvergenceTrainer(rhc, 1e-10, 20000000, 10000); //new FixedIterationTrainer(rhc, 200000);
-        fit.train();
-        System.out.println("Randomized Hill Climbing With Restart optimal: " + ef.value(rhcwr.getOptimal()));
-        System.out.println("Best iteration: " + fit.getBestIteration());
-        
-        System.out.println("Starting Simulated Annealing .95");
-        SimulatedAnnealing sa = new SimulatedAnnealing(1E12, .95, hcp);
-        fit = new TimeLimitTrainer(new OccasionalPrinter(sa, Duration.standardSeconds(1)), Duration.standardSeconds(5)); // new ConvergenceTrainer(sa, 1e-10, 20000000, 10000); //new FixedIterationTrainer(sa, 200000);
-        fit.train();
-        System.out.println("Simulated Annealing .95 optimal: " + ef.value(sa.getOptimal()));
-        System.out.println("Best iteration: " + fit.getBestIteration());
-        
-        System.out.println("Starting Simulated Annealing .99");
-        SimulatedAnnealing sa99 = new SimulatedAnnealing(1E12, .99, hcp);
-        fit = new TimeLimitTrainer(new OccasionalPrinter(sa99, Duration.standardSeconds(1)), Duration.standardSeconds(5)); // new ConvergenceTrainer(sa, 1e-10, 20000000, 10000); //new FixedIterationTrainer(sa, 200000);
-        fit.train();
-        System.out.println("Simulated Annealing .99 optimal: " + ef.value(sa99.getOptimal()));
-        System.out.println("Best iteration: " + fit.getBestIteration());
-        
-        System.out.println("Starting Genetic 200-150-20 Algorithm");
-        StandardGeneticAlgorithm ga = new StandardGeneticAlgorithm(200, 150, 20, gap);
-        fit = new TimeLimitTrainer(new OccasionalPrinter(ga, Duration.standardSeconds(1)), Duration.standardSeconds(5)); // new ConvergenceTrainer(ga, 1e-10, 20000000, 1000); //new FixedIterationTrainer(ga, 10000);
-        fit.train();
-        System.out.println("Genetic Algorithm 200-150-20 optimal: " + ef.value(ga.getOptimal()));
-        System.out.println("Best iteration: " + fit.getBestIteration());
-        
-        System.out.println("Starting Genetic 200-180-10 Algorithm");
-        StandardGeneticAlgorithm ga2 = new StandardGeneticAlgorithm(200, 180, 10, gap);
-        fit = new TimeLimitTrainer(new OccasionalPrinter(ga2, Duration.standardSeconds(1)), Duration.standardSeconds(5)); // new ConvergenceTrainer(ga, 1e-10, 20000000, 1000); //new FixedIterationTrainer(ga, 10000);
-        fit.train();
-        System.out.println("Genetic Algorithm 200-180-10 optimal: " + ef.value(ga2.getOptimal()));
-        System.out.println("Best iteration: " + fit.getBestIteration());
-        
-        // for mimic we use a sort encoding
-        //ef = new TravelingSalesmanSortEvaluationFunction(points);
-        int[] ranges = new int[N];
-        Arrays.fill(ranges, N);
-        odd = new  DiscreteUniformDistribution(ranges);
-        Distribution df = new DiscreteDependencyTree(.1, ranges); 
-        ProbabilisticOptimizationProblem pop = new GenericProbabilisticOptimizationProblem(ef, odd, df);
-        
-        System.out.println("Starting MIMIC 200-100 Algorithm");
-        MIMIC mimic = new MIMIC(200, 100, pop);
-        fit = new TimeLimitTrainer(new OccasionalPrinter(mimic, Duration.standardSeconds(1)), Duration.standardSeconds(5)); // new FixedIterationTrainer(mimic, 1000);
-        fit.train();
-        System.out.println("MIMIC 200-100 optimal: " + ef.value(mimic.getOptimal()));
-        System.out.println("Best iteration: " + fit.getBestIteration());
-        
-        System.out.println("Starting MIMIC 300-50 Algorithm");
-        MIMIC mimic2 = new MIMIC(300, 50, pop);
-        fit = new TimeLimitTrainer(new OccasionalPrinter(mimic2, Duration.standardSeconds(1)), Duration.standardSeconds(5)); // new FixedIterationTrainer(mimic, 1000);
-        fit.train();
-        System.out.println("MIMIC 300-50 optimal: " + ef.value(mimic2.getOptimal()));
-        System.out.println("Best iteration: " + fit.getBestIteration());
-        
-    }
+		// for rhc, sa, and ga we use a permutation based encoding
+		MaximumAreaEvaluationFunction ef = new MaximumAreaEvaluationFunction(points, N / 2);
+		Distribution odd = new DiscretePermutationDistribution(N);
+		
+		for (int run = 0; run < NUM_RUNS; run++) {
+			doTrainAndRecord(run, results_csv, ef, new RandomizedHillClimbing(makeHCP(ef, odd)));
+
+			doTrainAndRecord(run, results_csv, ef, new RandomizedHillClimbingWithRestart(makeHCP(ef, odd), 6000));
+			doTrainAndRecord(run, results_csv, ef, new SimulatedAnnealing(1E12, .95, makeHCP(ef, odd)));
+			doTrainAndRecord(run, results_csv, ef, new SimulatedAnnealing(1E12, .99, makeHCP(ef, odd)));
+
+			doTrainAndRecord(run, results_csv, ef, new StandardGeneticAlgorithm(200, 150, 20, makeGAP(N, ef, odd)));
+			doTrainAndRecord(run, results_csv, ef, new StandardGeneticAlgorithm(200, 180, 10, makeGAP(N, ef, odd)));
+			doTrainAndRecord(run, results_csv, ef, new MIMIC(200, 100, createMIMICPOP(N, ef)));
+			doTrainAndRecord(run, results_csv, ef, new MIMIC(300, 50, createMIMICPOP(N, ef)));			
+		}
+		results_csv.close();
+	}
+
+	private static void doTrainAndRecord(int run, PrintWriter results_csv, MaximumAreaEvaluationFunction ef, OptimizationAlgorithm optAlg) {
+		double start = System.nanoTime();
+		TrainResults results = doTrain(ef, optAlg);
+		double end = System.nanoTime();
+		double time = (end - start) / 10e9;
+		results_csv.print(optAlg.getShortName() + "," + run + "," + results.optimalFitness + "," + 
+				time + "," + results.iterations + "," + results.bestIteration + "," + time/results.iterations + "\n");
+	}
+
+	private static HillClimbingProblem makeHCP(MaximumAreaEvaluationFunction ef, Distribution odd) {
+		NeighborFunction nf = new SwapNeighbor();
+		HillClimbingProblem hcp = new GenericHillClimbingProblem(ef, odd, nf);
+		return hcp;
+	}
+
+	private static GeneticAlgorithmProblem makeGAP(int N, MaximumAreaEvaluationFunction ef, Distribution odd) {
+		MutationFunction mf = new SwapMutation();
+		CrossoverFunction cf = new OrderedCrossOver(N);
+		GeneticAlgorithmProblem gap = new GenericGeneticAlgorithmProblem(ef, odd, mf, cf);
+		return gap;
+	}
+
+	private static ProbabilisticOptimizationProblem createMIMICPOP(int N, MaximumAreaEvaluationFunction ef) {
+		Distribution odd;
+		int[] ranges = new int[N];
+		Arrays.fill(ranges, N);
+		odd = new DiscreteUniformDistribution(ranges);
+		Distribution df = new DiscreteDependencyTree(.1, ranges);
+		ProbabilisticOptimizationProblem pop = new GenericProbabilisticOptimizationProblem(ef, odd, df);
+		return pop;
+	}
+
+	static class TrainResults {
+		
+		public TrainResults(double finalFitness, double optimalFitness, int iterations, int bestIteration) {
+			this.finalFitness = finalFitness;
+			this.optimalFitness = optimalFitness;
+			this.iterations = iterations;
+			this.bestIteration = bestIteration;
+		}
+		public double finalFitness;
+		public double optimalFitness;
+		public int iterations;
+		public int bestIteration;
+	}
+	
+	private static TrainResults doTrain(MaximumAreaEvaluationFunction ef, OptimizationAlgorithm rhc) {
+		System.out.println("Starting " + rhc.getDescription());
+		TimeLimitTrainer fit = new TimeLimitTrainer(new OccasionalPrinter(rhc, Duration.millis(200)), Duration.standardSeconds(SECONDS));
+		double finalFitness = fit.train();
+		System.out.println(rhc.getDescription() + " optimal: " + ef.value(rhc.getOptimal()) + " final: " + finalFitness);
+		System.out.println("Best iteration: " + fit.getBestIteration());
+		return new TrainResults(finalFitness, ef.value(rhc.getOptimal()), fit.getIterations(), fit.getBestIteration());
+	}
 }

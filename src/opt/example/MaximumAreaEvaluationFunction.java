@@ -3,9 +3,6 @@ package opt.example;
 import opt.EvaluationFunction;
 import shared.Instance;
 
-import java.awt.Polygon;
-import java.awt.geom.*;
-
 /**
  * An implementation of the traveling salesman problem
  * where the encoding used is a permutation of [0, ..., n]
@@ -16,8 +13,8 @@ import java.awt.geom.*;
  */
 public class MaximumAreaEvaluationFunction implements EvaluationFunction {
 
-	double[][] points;
-	int polySize;
+	final double[][] points;
+	final int polySize;
 	
     /**
      * Make a new route evaluation function

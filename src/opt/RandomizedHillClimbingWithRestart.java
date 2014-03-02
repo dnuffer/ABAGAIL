@@ -87,4 +87,14 @@ public class RandomizedHillClimbingWithRestart extends OptimizationAlgorithm {
 		return best;
 	}
 
+	@Override
+	public String getDescription() {
+		return "Randomized Hill Climbing With Restart After " + maxIterationsWithoutRestart;
+	}
+
+	@Override
+	public String getShortName() {
+		return "RHCWR_" + maxIterationsWithoutRestart;
+	}
+
 }

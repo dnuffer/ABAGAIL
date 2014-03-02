@@ -102,4 +102,14 @@ public class MIMIC extends OptimizationAlgorithm {
         return cutoff;
     }
 
+	@Override
+	public String getDescription() {
+		return getShortName();
+	}
+
+	@Override
+	public String getShortName() {
+		return "MIMIC_" + samples + "_" + tokeep;
+	}
+
 }

@@ -14,12 +14,12 @@ public class DiscretePermutationDistribution extends AbstractDistribution {
     /**
      * The size of the data
      */
-    private int n;
+    private final int n;
     
     /**
      * The probability
      */
-    private double p;
+    private final double p;
     
     /**
      * Make a new discrete permutation distribution
@@ -27,11 +27,11 @@ public class DiscretePermutationDistribution extends AbstractDistribution {
      */
     public DiscretePermutationDistribution(int n) {
         this.n = n;
-        p = n;
+        double tmp = n;
         for (int i = n - 1; i >= 1; i--) {
-            p *= i;
+            tmp *= i;
         }
-        p = 1 / p;
+        p = 1 / tmp;
     }
 
     /**
