@@ -7,7 +7,7 @@ import java.io.Serializable;
  * @author Andrew Guillory gtg008g@mail.gatech.edu
  * @version 1.0
  */
-public interface Trainer extends Serializable {
+public interface Trainer {
     /**
      * The train the whatever
      * @return the error

@@ -10,6 +10,7 @@ public class ConvergenceTrainer implements Trainer {
     private static final double THRESHOLD = 1E-10;
     /** The maxium number of iterations */
     private static final int MAX_ITERATIONS = 500;
+    private static final int BELOW_THRESHOLD_MAX_ITERATIONS = 100;
 
     /**
      * The trainer
@@ -30,6 +31,16 @@ public class ConvergenceTrainer implements Trainer {
      * The maximum number of iterations to use
      */
     private int maxIterations;
+    
+    /**
+     * The maximum number of iterations where the change in error is < threshold
+     */
+    private int belowThresholdMaxIterations;
+    
+    /**
+     * How long has training been below the threshold
+     */
+    private int belowThresholdIterations;
 
     /**
      * Create a new convergence trainer
@@ -37,11 +48,11 @@ public class ConvergenceTrainer implements Trainer {
      * @param threshold the error threshold
      * @param maxIterations the maximum iterations
      */
-    public ConvergenceTrainer(Trainer trainer,
-            double threshold, int maxIterations) {
+    public ConvergenceTrainer(Trainer trainer, double threshold, int maxIterations, int belowThresholdMaxIterations) {
         this.trainer = trainer;
         this.threshold = threshold;
         this.maxIterations = maxIterations;
+        this.belowThresholdMaxIterations = belowThresholdMaxIterations; 
     }
     
 
@@ -50,7 +61,7 @@ public class ConvergenceTrainer implements Trainer {
      * @param trainer the trainer to use
      */
     public ConvergenceTrainer(Trainer trainer) {
-        this(trainer, THRESHOLD, MAX_ITERATIONS);
+        this(trainer, THRESHOLD, MAX_ITERATIONS, BELOW_THRESHOLD_MAX_ITERATIONS);
     }
 
     /**
@@ -63,8 +74,19 @@ public class ConvergenceTrainer implements Trainer {
            iterations++;
            lastError = error;
            error = trainer.train();
-        } while (Math.abs(error - lastError) > threshold
-             && iterations < maxIterations);
+           
+           if (iterations >= maxIterations)
+        	   break;
+           
+           if (Math.abs(error - lastError) < threshold) {
+               belowThresholdIterations++;
+        	   if (belowThresholdIterations >= belowThresholdMaxIterations)
+        		   break; // out of while loop
+           } else {
+               belowThresholdIterations = 0;
+           }
+           
+        } while (true);
         return error;
     }
     
