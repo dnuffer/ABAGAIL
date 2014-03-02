@@ -21,21 +21,21 @@ import java.text.*;
 public class ThoracicSurgeryTest {
     private static Instance[] instances = initializeInstances();
 
-    private static int inputLayer = 24, hiddenLayer = 9, outputLayer = 1, trainingIterations = 100;
+    private static int inputLayer = 24, hiddenLayer = 9, outputLayer = 1, trainingIterations = 10000;
     private static BackPropagationNetworkFactory factory = new BackPropagationNetworkFactory();
     
     private static ErrorMeasure measure = new SumOfSquaresError();
 
     private static DataSet set = new DataSet(instances);
 
-    private static int numAlgs = 7;
-    private static int numRuns = 3;
+    private static int numAlgs = 9;
+    private static int numRuns = 30;
     private static double classThreshold = 0.5;
     private static BackPropagationNetwork networks[] = new BackPropagationNetwork[numAlgs * numRuns];
     private static NeuralNetworkOptimizationProblem[] nnop = new NeuralNetworkOptimizationProblem[numAlgs * numRuns];
 
     private static OptimizationAlgorithm[] oa = new OptimizationAlgorithm[numAlgs * numRuns];
-    private static String[] oaNames = {"RHC", "RHCWR_25", "RHCWR_100", "SA_1E11_95", "SA_1E11_99", "GA_200_100_10", "GA_200_190_10"};
+    private static String[] oaNames = {"RHC", "RHCWR_25", "RHCWR_100", "RHCWR_500", "SA_1E11_90", "SA_1E11_95", "SA_1E11_99", "GA_200_100_10", "GA_200_190_10"};
     private static String results = "";
 
     private static DecimalFormat df = new DecimalFormat("0.000");
@@ -57,6 +57,8 @@ public class ThoracicSurgeryTest {
 	        oa[i] = new RandomizedHillClimbing(nnop[i]); i++;
 	        oa[i] = new RandomizedHillClimbingWithRestart(nnop[i], 25); i++;
 	        oa[i] = new RandomizedHillClimbingWithRestart(nnop[i], 100); i++;
+	        oa[i] = new RandomizedHillClimbingWithRestart(nnop[i], 500); i++;
+	        oa[i] = new SimulatedAnnealing(1E11, .90, nnop[i]); i++;
 	        oa[i] = new SimulatedAnnealing(1E11, .95, nnop[i]); i++;
 	        oa[i] = new SimulatedAnnealing(1E11, .99, nnop[i]); i++;
 	        oa[i] = new StandardGeneticAlgorithm(200, 100, 10, nnop[i]); i++;
