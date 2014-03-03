@@ -20,21 +20,24 @@ public class TimeLimitTrainer implements Trainer {
 	private int iterations;
 	private double best;
 	private int bestIteration;
+	private Tracer tracer;
 
 	/**
 	 * Create a new convergence trainer
 	 * 
 	 * @param trainer
 	 *            the thrainer to use
+	 * @param tracer If != null, called every iteration
 	 * @param threshold
 	 *            the error threshold
 	 * @param maxIterations
 	 *            the maximum iterations
 	 */
-	public TimeLimitTrainer(Trainer trainer, Duration timeLimit) {
+	public TimeLimitTrainer(Trainer trainer, Duration timeLimit, Tracer tracer) {
 		this.trainer = trainer;
 		this.timeLimit = timeLimit;
 		this.best = Double.MIN_VALUE;
+		this.tracer = tracer;
 	}
 
 	/**
@@ -47,6 +50,9 @@ public class TimeLimitTrainer implements Trainer {
 		while (end.isAfterNow()) {
 			iterations++;
 			value = trainer.train();
+			if (tracer != null) {
+				tracer.trace(iterations, value);
+			}
 			if (value > best) {
 				best = value;
 				bestIteration = iterations;
