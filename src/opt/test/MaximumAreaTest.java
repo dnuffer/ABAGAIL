@@ -109,7 +109,7 @@ public class MaximumAreaTest {
 		int N = points.length;
 
 		PrintWriter results_csv = new PrintWriter(problemName + "_results.csv");
-		results_csv.print("Algorithm,Run,Fitness,Time,Iterations,BestIteration,SecondsPerIteration\n");
+		results_csv.print("Algorithm,Run,BestFitness,Time,Iterations,BestIteration,SecondsPerIteration\n");
 		PrintWriter traces_output = new PrintWriter("MaximumAreaTest_" + N + "_traces.csv");
     	traces_output.print("Algorithm,Run,TraceIdx,Iteration,BestFitness,CurrentFitness\n");
 
