@@ -14,6 +14,7 @@ public class IntervalTraceCSVLogger implements Tracer {
     private String staticPrefix;
     private PrintWriter output;
     private int interval;
+    private int traceCount = 1;
     
     /**
      * Make a new occasional printer
@@ -32,7 +33,7 @@ public class IntervalTraceCSVLogger implements Tracer {
     @Override
 	public void trace(int iteration, double fitness) {
         if (iteration % interval == 0) {
-        	output.println(staticPrefix + "," + iteration + "," + fitness);
+        	output.println(staticPrefix + "," + traceCount + "," + iteration + "," + fitness);
         }
     }
 

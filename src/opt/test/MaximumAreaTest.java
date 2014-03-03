@@ -111,7 +111,7 @@ public class MaximumAreaTest {
 		PrintWriter results_csv = new PrintWriter(problemName + "_results.csv");
 		results_csv.print("Algorithm,Run,Fitness,Time,Iterations,BestIteration,SecondsPerIteration\n");
 		PrintWriter traces_output = new PrintWriter("MaximumAreaTest_" + N + "_traces.csv");
-    	traces_output.print("Algorithm,Run,Iteration,Fitness\n");
+    	traces_output.print("Algorithm,Run,TraceIdx,Iteration,Fitness\n");
 
     	// for rhc, sa, and ga we use a permutation based encoding
 		MaximumAreaEvaluationFunction ef = new MaximumAreaEvaluationFunction(points, N / 2);
@@ -135,7 +135,7 @@ public class MaximumAreaTest {
 
 	private static void doTrainAndRecord(int run, PrintWriter results_csv, MaximumAreaEvaluationFunction ef, PrintWriter traces_output, 
 			OptimizationAlgorithm optAlg) throws FileNotFoundException {
-		Tracer tracer = new IntervalTraceCSVLogger(optAlg.getShortName() + "," + run, 100, traces_output);
+		Tracer tracer = new PeriodicTraceCSVLogger(optAlg.getShortName() + "," + run, Duration.millis(SECONDS * 1000 / 100), traces_output);
 
 		double start = System.nanoTime();
 		TrainResults results = doTrain(ef, optAlg, tracer);

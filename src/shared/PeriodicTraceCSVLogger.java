@@ -15,6 +15,7 @@ public class PeriodicTraceCSVLogger implements Tracer {
     private Duration printDelay;
     private Instant nextPrint;
     private PrintWriter output;
+    private int traceCount = 1;
     
     /**
      * Make a new occasional printer
@@ -24,7 +25,7 @@ public class PeriodicTraceCSVLogger implements Tracer {
     public PeriodicTraceCSVLogger(String staticPrefix, Duration printDelay, PrintWriter output) {
     	this.staticPrefix = staticPrefix;
         this.printDelay = printDelay;
-        this.nextPrint = new Instant().plus(printDelay);
+        this.nextPrint = new Instant().minus(Duration.millis(1)); // set it one millisecond ago so that first trace happens immediately
         this.output = output;
     }
 
@@ -34,7 +35,8 @@ public class PeriodicTraceCSVLogger implements Tracer {
     @Override
 	public void trace(int iteration, double fitness) {
         if (nextPrint.isBeforeNow()) {
-        	output.println(staticPrefix + "," + iteration + "," + fitness);
+        	output.println(staticPrefix + "," + traceCount + "," + iteration + "," + fitness);
+        	traceCount++;
             nextPrint = nextPrint.plus(printDelay);
         }
     }
