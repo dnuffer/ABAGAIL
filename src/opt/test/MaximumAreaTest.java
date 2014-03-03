@@ -111,7 +111,7 @@ public class MaximumAreaTest {
 		PrintWriter results_csv = new PrintWriter(problemName + "_results.csv");
 		results_csv.print("Algorithm,Run,Fitness,Time,Iterations,BestIteration,SecondsPerIteration\n");
 		PrintWriter traces_output = new PrintWriter("MaximumAreaTest_" + N + "_traces.csv");
-    	traces_output.print("Algorithm,Run,Iteration,Cost\n");
+    	traces_output.print("Algorithm,Run,Iteration,Fitness\n");
 
     	// for rhc, sa, and ga we use a permutation based encoding
 		MaximumAreaEvaluationFunction ef = new MaximumAreaEvaluationFunction(points, N / 2);
