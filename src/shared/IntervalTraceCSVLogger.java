@@ -31,9 +31,9 @@ public class IntervalTraceCSVLogger implements Tracer {
 	 * @see shared.Tracer#trace(int, double)
 	 */
     @Override
-	public void trace(int iteration, double fitness) {
+	public void trace(int iteration, double optimalValue, double trainValue) {
         if (iteration % interval == 0) {
-        	output.println(staticPrefix + "," + traceCount + "," + iteration + "," + fitness);
+        	output.println(staticPrefix + "," + traceCount + "," + iteration + "," + optimalValue + "," + trainValue);
         }
     }
 

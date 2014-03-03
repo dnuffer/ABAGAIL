@@ -1,5 +1,7 @@
 package shared;
 
+import opt.OptimizationAlgorithm;
+
 import org.joda.time.*;
 
 /**
@@ -14,7 +16,7 @@ public class TimeLimitTrainer implements Trainer {
 	/**
 	 * The trainer
 	 */
-	private Trainer trainer;
+	private OptimizationAlgorithm trainer;
 
 	private Duration timeLimit;
 	private int iterations;
@@ -33,7 +35,7 @@ public class TimeLimitTrainer implements Trainer {
 	 * @param maxIterations
 	 *            the maximum iterations
 	 */
-	public TimeLimitTrainer(Trainer trainer, Duration timeLimit, Tracer tracer) {
+	public TimeLimitTrainer(OptimizationAlgorithm trainer, Duration timeLimit, Tracer tracer) {
 		this.trainer = trainer;
 		this.timeLimit = timeLimit;
 		this.best = Double.MIN_VALUE;
@@ -51,7 +53,7 @@ public class TimeLimitTrainer implements Trainer {
 			iterations++;
 			value = trainer.train();
 			if (tracer != null) {
-				tracer.trace(iterations, value);
+				tracer.trace(iterations, trainer.getOptimal().getContinuous(), value);
 			}
 			if (value > best) {
 				best = value;

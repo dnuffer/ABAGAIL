@@ -33,9 +33,9 @@ public class PeriodicTraceCSVLogger implements Tracer {
 	 * @see shared.Tracer#trace(int, double)
 	 */
     @Override
-	public void trace(int iteration, double fitness) {
+	public void trace(int iteration, double optimalValue, double trainValue) {
         if (nextPrint.isBeforeNow()) {
-        	output.println(staticPrefix + "," + traceCount + "," + iteration + "," + fitness);
+        	output.println(staticPrefix + "," + traceCount + "," + iteration + "," + optimalValue + "," + trainValue);
         	traceCount++;
             nextPrint = nextPrint.plus(printDelay);
         }
