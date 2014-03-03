@@ -135,7 +135,7 @@ public class MaximumAreaTest {
 
 	private static void doTrainAndRecord(int run, PrintWriter results_csv, MaximumAreaEvaluationFunction ef, PrintWriter traces_output, 
 			OptimizationAlgorithm optAlg) throws FileNotFoundException {
-		Tracer tracer = new PeriodicTraceCSVLogger(optAlg.getShortName() + "," + run, Duration.millis(SECONDS * 1000 / 100), traces_output);
+		Tracer tracer = new IntervalTraceCSVLogger(optAlg.getShortName() + "," + run, 100, traces_output);
 
 		double start = System.nanoTime();
 		TrainResults results = doTrain(ef, optAlg, tracer);
