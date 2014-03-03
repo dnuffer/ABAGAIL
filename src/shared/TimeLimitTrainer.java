@@ -53,7 +53,7 @@ public class TimeLimitTrainer implements Trainer {
 			iterations++;
 			value = trainer.train();
 			if (tracer != null) {
-				tracer.trace(iterations, trainer.getOptimal().getContinuous(), value);
+				tracer.trace(iterations, trainer.getOptimizationProblem().value(trainer.getOptimal()), value);
 			}
 			if (value > best) {
 				best = value;
