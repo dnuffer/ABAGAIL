@@ -49,6 +49,10 @@ public class TimeLimitTrainer implements Trainer {
 		double value = Double.MAX_VALUE;
 		DateTime end = DateTime.now().plus(timeLimit);
 		
+		if (tracer != null) {
+			tracer.start(trainer.getShortName(), 0);
+		}
+		
 		while (end.isAfterNow()) {
 			iterations++;
 			value = trainer.train();

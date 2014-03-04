@@ -48,7 +48,7 @@ import shared.*;
 public class MaximumAreaTest {
 	final static int NUM_PROBLEMS = 5;
 	// final static int NUM_RUNS = 30, SECONDS = 5;
-	final static int NUM_RUNS = 2, SECONDS = 1;
+	final static int NUM_RUNS = 2, MILLISECONDS = 100;
 
 	/**
 	 * The test main
@@ -66,7 +66,7 @@ public class MaximumAreaTest {
 
 		// now do a run for the iteration limit
 		System.out.println("JIT PRIMING AND COUNTING ITERATIONS");
-		ArrayList<TrainResults> results = doRunAll(new ProblemRun(problems.get(0), null, null, 0, new TimeLimit(Duration.standardSeconds(MaximumAreaTest.SECONDS))));
+		ArrayList<TrainResults> results = doRunAll(new ProblemRun(problems.get(0), null, null, 0, new TimeLimit(Duration.millis(MaximumAreaTest.MILLISECONDS))));
 		int[] iterationLimits = new int[results.size()];
 		for (int i = 0; i < results.size(); i++) {
 			iterationLimits[i] = results.get(i).iterations;
@@ -74,12 +74,58 @@ public class MaximumAreaTest {
 		}
 		System.out.println("DONE JIT PRIMING AND COUNTING ITERATIONS");
 		
-		
+		// run each of them for a fixed period of time
 		for (Problem problem : problems) {
-			doProblem(problem, iterationLimits);
+			doProblemPeriodicTrace(problem, iterationLimits);
 		}
+
+		// run each of them for 100 iterations (to show how MIMIC is better for expensive fitness functions)
+		// but have to adjust for the populations used.
+		for (Problem problem : problems) {
+			String oldName = problem.problemName;
+			problem.problemName += "_100iter";
+			int[] iters = new int[]{
+					30000, // RHC x1 
+					30000, // RHCWR x1 
+					30000, // SA.95 x1 
+					30000, // SA.99 x1 
+					150, // GA200 x200 
+					150, // GA200 x200
+					150, // MIMIC200 x200
+					100  // MIMIC300 x300
+					};
+			doProblemAllIterationsTrace(problem, iters, 1);
+			problem.problemName = oldName;
+		}
+	
 	}
 
+	private static void doProblemPeriodicTrace(Problem problem, int[] iterationLimits) throws FileNotFoundException {		
+		PrintWriter traces_output = new PrintWriter(problem.problemName + "_traces.csv");
+    	traces_output.print("Algorithm,Run,TraceIdx,Iteration,BestFitness,CurrentFitness\n");
+    	Tracer tracer = new PeriodicTraceCSVLogger("", Duration.millis(1), traces_output);
+    	doProblem(problem, iterationLimits, tracer);
+		traces_output.close();
+	}
+	
+	private static void doProblemAllIterationsTrace(Problem problem, int[] iterationLimits, int traceInterval) throws FileNotFoundException {		
+		PrintWriter traces_output = new PrintWriter(problem.problemName + "_traces.csv");
+    	traces_output.print("Algorithm,Run,TraceIdx,Iteration,BestFitness,CurrentFitness\n");
+    	Tracer tracer = new IntervalTraceCSVLogger("", traceInterval, traces_output);
+    	doProblem(problem, iterationLimits, tracer);
+		traces_output.close();
+	}
+	
+	private static void doProblem(Problem problem, int[] iterationLimits, Tracer tracer) throws FileNotFoundException {		
+		ResultCSVWriter results_csv = new ResultCSVWriter(new PrintWriter(problem.problemName + "_results.csv"));
+    	
+		for (int run = 0; run < NUM_RUNS; run++) {
+			doRunAll(new ProblemRun(problem, results_csv, tracer, run, new MultiRunIterationLimit(iterationLimits)));
+		}
+		
+		results_csv.close();
+	}
+	
 	private static Problem loadProblem(int p) throws IOException {
 		String problemName = "MaximumAreaTest_" + p * 10;
 		String problemDataFilename = problemName + ".csv";
@@ -152,11 +198,11 @@ public class MaximumAreaTest {
 	public static class ProblemRun {
 		public Problem problem;
 		public ResultHandler resultHandler;
-		public PrintWriter traces_output;
+		public Tracer traces_output;
 		public int run;
 		public TrainingTerminationCondition termination;
 
-		public ProblemRun(Problem p, ResultHandler resultHandler, PrintWriter traces_output, int run, TrainingTerminationCondition termination) {
+		public ProblemRun(Problem p, ResultHandler resultHandler, Tracer traces_output, int run, TrainingTerminationCondition termination) {
 			this.problem = p;
 			this.resultHandler = resultHandler;
 			this.traces_output = traces_output;
@@ -226,28 +272,13 @@ public class MaximumAreaTest {
 	}
 
 
-	private static void doProblem(Problem problem, int[] iterationLimits) throws FileNotFoundException {		
-		ResultCSVWriter results_csv = new ResultCSVWriter(new PrintWriter(problem.problemName + "_results.csv"));
-		PrintWriter traces_output = new PrintWriter("MaximumAreaTest_" + problem.n + "_traces.csv");
-    	traces_output.print("Algorithm,Run,TraceIdx,Iteration,BestFitness,CurrentFitness\n");
-
-		for (int run = 0; run < NUM_RUNS; run++) {
-			// TODO: use iteration count from first run here
-			doRunAll(new ProblemRun(problem, results_csv, traces_output, run, new MultiRunIterationLimit(iterationLimits)));
-		}
-		results_csv.close();
-		traces_output.close();
-	}
-	
 	public static class ParameterizedAlgorithmRun extends OptimizationAlgorithm {
 		ParameterizedAlgorithm pa;
 		ProblemRun pr;
-		Tracer tracer;
 		public ParameterizedAlgorithmRun(ParameterizedAlgorithm pa, ProblemRun pr) {
 			super(pa.oa.getOptimizationProblem());
 			this.pa = pa;
 			this.pr = pr;
-			this.tracer = makeTracer(); // call this last
 		}
 		
 		public String getShortName() {
@@ -273,14 +304,6 @@ public class MaximumAreaTest {
 			return pa.ef.value(pa.oa.getOptimal());
 		}
 
-		private Tracer makeTracer() {
-			if (pr.traces_output != null) {
-				return new PeriodicTraceCSVLogger(getShortName() + "," + pr.run, Duration.millis(SECONDS * 1000 / 100), pr.traces_output);
-			} else {
-				return null;
-			}
-		}
-
 		void recordRun(MaximumAreaTest.TrainResults results, double time) {
 			if (pr.resultHandler != null) {
 				pr.resultHandler.handle(getShortName(), pr.run, results.optimalFitness, time, results.iterations, results.bestIteration);
@@ -297,15 +320,20 @@ public class MaximumAreaTest {
 			double value = Double.MAX_VALUE;
 			int bestIteration = 0;
 			double best = Double.MIN_VALUE;
-			
+						
 			pr.termination.start();
+			if (pr.traces_output != null) {
+				pr.traces_output.start(pa.getShortName(), pr.run);
+			}
 			
 			while (pr.termination.shouldContinue(this)) {
 				iterations++;
 				value = train();
-				if (tracer != null) {
-					tracer.trace(iterations, getOptimalValue(), value);
+				
+				if (pr.traces_output != null) {
+					pr.traces_output.trace(iterations, getOptimalValue(), value);
 				}
+				
 				if (value > best) {
 					best = value;
 					bestIteration = iterations;

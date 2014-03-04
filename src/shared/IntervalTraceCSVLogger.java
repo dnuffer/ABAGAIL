@@ -15,6 +15,8 @@ public class IntervalTraceCSVLogger implements Tracer {
     private PrintWriter output;
     private int interval;
     private int traceCount = 1;
+	private String algorithmId;
+	private int run;
     
     /**
      * Make a new occasional printer
@@ -27,13 +29,20 @@ public class IntervalTraceCSVLogger implements Tracer {
         this.output = output;
     }
 
+    public void start(String algorithmId, int run) {
+    	this.algorithmId = algorithmId;
+    	this.run = run;
+    	this.traceCount = 1;
+    }
+    
     /* (non-Javadoc)
 	 * @see shared.Tracer#trace(int, double)
 	 */
     @Override
 	public void trace(int iteration, double optimalValue, double trainValue) {
         if (iteration % interval == 0) {
-        	output.println(staticPrefix + "," + traceCount + "," + iteration + "," + optimalValue + "," + trainValue);
+        	output.println(staticPrefix + algorithmId + "," + run + "," + traceCount + "," + iteration + "," + optimalValue + "," + trainValue);
+        	traceCount++;
         }
     }
 
