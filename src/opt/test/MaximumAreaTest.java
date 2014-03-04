@@ -83,16 +83,16 @@ public class MaximumAreaTest {
 		// but have to adjust for the populations used.
 		for (Problem problem : problems) {
 			String oldName = problem.problemName;
-			problem.problemName += "_100iter";
+			problem.problemName += "_limited_iterations";
 			int[] iters = new int[]{
-					30000, // RHC x1 
-					30000, // RHCWR x1 
-					30000, // SA.95 x1 
-					30000, // SA.99 x1 
-					150, // GA200 x200 
-					150, // GA200 x200
-					150, // MIMIC200 x200
-					100  // MIMIC300 x300
+					3000, // RHC x1 
+					3000, // RHCWR x1 
+					3000, // SA.95 x1 
+					3000, // SA.99 x1 
+					15, // GA200 x200 
+					15, // GA200 x200
+					15, // MIMIC200 x200
+					10  // MIMIC300 x300
 					};
 			doProblemAllIterationsTrace(problem, iters, 1);
 			problem.problemName = oldName;
