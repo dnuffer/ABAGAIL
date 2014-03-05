@@ -103,7 +103,7 @@ public class MaximumAreaTest {
 	private static void doProblemPeriodicTrace(Problem problem, int[] iterationLimits) throws FileNotFoundException {		
 		PrintWriter traces_output = new PrintWriter(problem.problemName + "_traces.csv");
     	traces_output.print("Algorithm,Run,TraceIdx,Iteration,BestFitness,CurrentFitness\n");
-    	Tracer tracer = new PeriodicTraceCSVLogger("", Duration.millis(1), traces_output);
+    	Tracer tracer = new PeriodicTraceCSVLogger("", Duration.millis(100), traces_output);
     	doProblem(problem, iterationLimits, tracer);
 		traces_output.close();
 	}
