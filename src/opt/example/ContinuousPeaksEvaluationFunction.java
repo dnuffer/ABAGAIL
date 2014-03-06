@@ -58,4 +58,9 @@ public class ContinuousPeaksEvaluationFunction implements EvaluationFunction {
         }
         return Math.max(max1, max0) + r;
     }
+
+	@Override
+	public String asString(Instance optimal) {
+		return "ContinuousPeaks[" + t + "]: " + optimal.getData();
+	}
 }

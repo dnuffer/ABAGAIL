@@ -16,4 +16,6 @@ public interface EvaluationFunction {
      */
     public abstract double value(Instance d);
 
+	public abstract String asString(Instance optimal);
+
 }

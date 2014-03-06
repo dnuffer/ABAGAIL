@@ -23,4 +23,10 @@ public class CountOnesEvaluationFunction implements EvaluationFunction {
         }
         return val;
     }
+    
+	@Override
+	public String asString(Instance optimal) {
+		return "CountOnes: " + optimal.getData();
+	}
+
 }

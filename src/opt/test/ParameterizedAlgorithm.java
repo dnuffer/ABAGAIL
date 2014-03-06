@@ -3,18 +3,15 @@ package opt.test;
 import opt.EvaluationFunction;
 import opt.OptimizationAlgorithm;
 import shared.Instance;
-import dist.Distribution;
 
 public class ParameterizedAlgorithm extends OptimizationAlgorithm {
 	EvaluationFunction ef;
 	OptimizationAlgorithm oa;
-	Distribution odd;
 	
-	public ParameterizedAlgorithm(EvaluationFunction ef, OptimizationAlgorithm oa, Distribution odd) {
+	public ParameterizedAlgorithm(EvaluationFunction ef, OptimizationAlgorithm oa) {
 		super(oa.getOptimizationProblem());
 		this.ef = ef;
 		this.oa = oa;
-		this.odd = odd;
 	}
 
 	public String getShortName() {

@@ -68,4 +68,9 @@ public class KnapsackEvaluationFunction implements EvaluationFunction {
         
     }
 
+	@Override
+	public String asString(Instance optimal) {
+		return "Knapsack: " + optimal.getData();
+	}
+
 }

@@ -18,39 +18,52 @@ import shared.Tracer;
 
 public class TestRunner {
 
-	static void doProblemPeriodicTrace(Problem problem, int[] iterationLimits) throws FileNotFoundException {		
+	static void doProblemPeriodicTrace(Problem problem, int[] iterationLimits, int runs, ProblemRunner runner) throws Exception {		
 		PrintWriter traces_output = new PrintWriter(problem.getProblemName() + "_traces.csv");
 		traces_output.print("Algorithm,Run,TraceIdx,Iteration,BestFitness,CurrentFitness\n");
 		Tracer tracer = new PeriodicTraceCSVLogger("", Duration.millis(100), traces_output);
-		TestRunner.doProblem(problem, iterationLimits, tracer);
+		TestRunner.doProblem(problem, iterationLimits, tracer, runs, runner);
 		traces_output.close();
 	}
 
-	static void doProblemAllIterationsTrace(Problem problem, int[] iterationLimits, int traceInterval) throws FileNotFoundException {		
+	static void doProblemPeriodicTrace(Problem problem, Duration timeLimit, int runs, ProblemRunner runner) throws Exception {		
+		PrintWriter traces_output = new PrintWriter(problem.getProblemName() + "_traces.csv");
+		traces_output.print("Algorithm,Run,TraceIdx,Iteration,BestFitness,CurrentFitness\n");
+		Tracer tracer = new PeriodicTraceCSVLogger("", Duration.millis(100), traces_output);
+		TestRunner.doProblem(problem, timeLimit, tracer, runs, runner);
+		traces_output.close();
+	}
+
+	static void doProblemAllIterationsTrace(Problem problem, int[] iterationLimits, int traceInterval, int runs, ProblemRunner runner) throws Exception {		
 		PrintWriter traces_output = new PrintWriter(problem.getProblemName() + "_traces.csv");
 		traces_output.print("Algorithm,Run,TraceIdx,Iteration,BestFitness,CurrentFitness\n");
 		Tracer tracer = new IntervalTraceCSVLogger("", traceInterval, traces_output);
-		TestRunner.doProblem(problem, iterationLimits, tracer);
+		TestRunner.doProblem(problem, iterationLimits, tracer, runs, runner);
 		traces_output.close();
 	}
 
-	static void doProblem(Problem problem, int[] iterationLimits, Tracer tracer) throws FileNotFoundException {		
-		ResultCSVWriter results_csv = new ResultCSVWriter(new PrintWriter(problem.getProblemName() + "_results.csv"));
-		
-		for (int run = 0; run < MaximumAreaTest.NUM_RUNS; run++) {
-			MaximumAreaTest.doRunAll(new ProblemRun(problem, results_csv, tracer, run, new MultiRunIterationLimit(iterationLimits)));
+	static interface ProblemRunner {
+		ArrayList<TrainResults> runAll(ProblemRun problemRun) throws FileNotFoundException;
+	}
+	
+	static ArrayList<TrainResults> doProblem(Problem problem, int[] iterationLimits, Tracer tracer, int runs, ProblemRunner runner) throws Exception {		
+		try(ResultCSVWriter results_csv = new ResultCSVWriter(new PrintWriter(problem.getProblemName() + "_results.csv"))) {
+			ArrayList<TrainResults> results = new ArrayList<TrainResults>();
+			for (int run = 0; run < runs; run++) {
+				results.addAll(runner.runAll(new ProblemRun(problem, results_csv, tracer, run, new MultiRunIterationLimit(iterationLimits))));
+			}
+			return results;
 		}
-		
-		results_csv.close();
 	}
 
-	static Problem loadProblem(int p) throws IOException {
-		String problemName = "MaximumAreaTest_" + p * 10;
-		String problemDataFilename = problemName + ".csv";
-		double[][] points = TestRunner.loadProblemData(problemDataFilename);
-		System.out.println("Loaded " + problemDataFilename + " " + points.length);
-		Problem problem = new MaximumAreaProblem(points, problemName);
-		return problem;
+	static ArrayList<TrainResults> doProblem(Problem problem, Duration timeLimit, Tracer tracer, int runs, ProblemRunner runner) throws Exception {		
+		try(ResultCSVWriter results_csv = new ResultCSVWriter(new PrintWriter(problem.getProblemName() + "_results.csv"))) {
+			ArrayList<TrainResults> results = new ArrayList<TrainResults>();
+			for (int run = 0; run < runs; run++) {
+				results.addAll(runner.runAll(new ProblemRun(problem, results_csv, tracer, run, new TimeLimit(timeLimit))));
+			}
+			return results;
+		}
 	}
 
 	static double[] toDoubleArray(List<Double> list) {
@@ -77,14 +90,15 @@ public class TestRunner {
 			String line = br.readLine();
 	
 			while ((line = br.readLine()) != null) {
-				Scanner scan = new Scanner(line);
-				scan.useDelimiter(",");
-	
-				ArrayList<Double> lineArray = new ArrayList<Double>();
-				results.add(lineArray);
-	
-				while (scan.hasNext())
-					lineArray.add(Double.parseDouble(scan.next()));
+				try(Scanner scan = new Scanner(line)) {
+					scan.useDelimiter(",");
+		
+					ArrayList<Double> lineArray = new ArrayList<Double>();
+					results.add(lineArray);
+		
+					while (scan.hasNext())
+						lineArray.add(Double.parseDouble(scan.next()));
+				}
 			}
 			return toDoubleArrayArray(results);
 		} finally {

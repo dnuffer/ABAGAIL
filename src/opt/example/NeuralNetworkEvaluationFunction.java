@@ -57,4 +57,9 @@ public class NeuralNetworkEvaluationFunction implements EvaluationFunction {
         return 1 / error;
     }
 
+	@Override
+	public String asString(Instance optimal) {
+		return "NeuralNetwork: " + optimal.getData();
+	}
+
 }

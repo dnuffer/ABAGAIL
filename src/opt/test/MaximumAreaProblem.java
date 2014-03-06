@@ -1,5 +1,7 @@
 package opt.test;
 
+import java.util.Arrays;
+
 import opt.EvaluationFunction;
 import opt.example.MaximumAreaEvaluationFunction;
 import dist.DiscretePermutationDistribution;
@@ -27,11 +29,6 @@ public class MaximumAreaProblem implements Problem {
 	}
 	
 	@Override
-	public int getN() {
-		return n;
-	}
-	
-	@Override
 	public String getProblemName() {
 		return problemName;
 	}
@@ -39,5 +36,12 @@ public class MaximumAreaProblem implements Problem {
 	@Override
 	public void setProblemName(String newProblemName) {
 		problemName = newProblemName;
+	}
+
+	@Override
+	public int[] getRanges() {
+		int[] ranges = new int[n];
+		Arrays.fill(ranges, n);
+		return ranges;
 	}
 }

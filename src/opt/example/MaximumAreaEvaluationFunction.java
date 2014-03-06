@@ -29,6 +29,7 @@ public class MaximumAreaEvaluationFunction implements EvaluationFunction {
      * @see opt.EvaluationFunction#value(opt.OptimizationData)
      */
     public double value(Instance d) {
+        //    http://stackoverflow.com/questions/17579053/draw-polygon-and-calculate-area-in-java
     	double area = 0.0;
     	
     	for (int i = 0; i < polySize; i++) {
@@ -41,5 +42,10 @@ public class MaximumAreaEvaluationFunction implements EvaluationFunction {
     	return Math.abs(area) / 2.0;
     }
 
-    //    http://stackoverflow.com/questions/17579053/draw-polygon-and-calculate-area-in-java
+    
+	@Override
+	public String asString(Instance optimal) {
+		return "MaximumArea: " + optimal.getData();
+	}
+
 }

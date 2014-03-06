@@ -33,8 +33,12 @@ public class ParameterizedAlgorithmRun extends OptimizationAlgorithm {
 			return pa.oa.getDescription();
 		}
 
-		public double getOptimalValue() {
+		public double getOptimalFitnessValue() {
 			return pa.ef.value(pa.oa.getOptimal());
+		}
+
+		private String getOptimalSolution() {
+			return pa.ef.asString(pa.oa.getOptimal());
 		}
 
 		void recordRun(TrainResults results, double time) {
@@ -64,7 +68,7 @@ public class ParameterizedAlgorithmRun extends OptimizationAlgorithm {
 				value = train();
 				
 				if (pr.traces_output != null) {
-					pr.traces_output.trace(iterations, getOptimalValue(), value);
+					pr.traces_output.trace(iterations, getOptimalFitnessValue(), value);
 				}
 				
 				if (value > best) {
@@ -75,9 +79,10 @@ public class ParameterizedAlgorithmRun extends OptimizationAlgorithm {
 
 			double finalFitness = value;
 			
-			System.out.println(getDescription() + " optimal: " + getOptimalValue() + " final: " + finalFitness);
+			System.out.println(getDescription() + " optimal fitness: " + getOptimalFitnessValue() + " final fitness: " + finalFitness);
 			System.out.println("Best iteration: " + bestIteration);
-			return new TrainResults(finalFitness, getOptimalValue(), iterations, bestIteration);
+			System.out.println("Optimal Solution:\n" + getOptimalSolution()); 
+			return new TrainResults(finalFitness, getOptimalFitnessValue(), iterations, bestIteration);
 		}
 
 		TrainResults doTrainAndRecord() throws FileNotFoundException {

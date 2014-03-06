@@ -32,5 +32,9 @@ public class TravelingSalesmanRouteEvaluationFunction extends TravelingSalesmanE
         return 1/distance;
     }
 
+	@Override
+	public String asString(Instance optimal) {
+		return "TravelingSalesmanRoute: " + optimal.getData();
+	}
 
 }

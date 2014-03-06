@@ -45,5 +45,9 @@ public class FourPeaksEvaluationFunction implements EvaluationFunction {
         return Math.max(tail, head) + r;
     }
     
-    
+	@Override
+	public String asString(Instance optimal) {
+		return "FourPeaks[" + t + "]: " + optimal.getData();
+	}
+
 }

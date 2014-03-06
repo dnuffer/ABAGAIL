@@ -23,4 +23,10 @@ public class FlipFlopEvaluationFunction implements EvaluationFunction {
         }
         return val;
     }
+    
+	@Override
+	public String asString(Instance optimal) {
+		return "FlipFlop: " + optimal.getData();
+	}
+
 }

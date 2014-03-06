@@ -8,5 +8,5 @@ public interface Problem {
 	void setProblemName(String string);
 	String getProblemName();
 	Distribution getDistribution();
-	int getN();
+	int[] getRanges();
 }

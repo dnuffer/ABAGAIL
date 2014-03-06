@@ -10,9 +10,9 @@ import org.joda.time.Duration;
 import dist.DiscreteDependencyTree;
 import dist.DiscreteUniformDistribution;
 import dist.Distribution;
+import opt.DiscreteChangeOneNeighbor;
 import opt.EvaluationFunction;
 import opt.RandomizedHillClimbingWithRestart;
-import opt.SwapNeighbor;
 import opt.GenericHillClimbingProblem;
 import opt.HillClimbingProblem;
 import opt.NeighborFunction;
@@ -35,10 +35,11 @@ import opt.test.TestRunner.ProblemRunner;
  * @author Andrew Guillory gtg008g@mail.gatech.edu
  * @version 1.0
  */
-public class MaximumAreaTest {
-	final static int NUM_PROBLEMS = 5;
+public class GOLMaximizationTest {
+	final static int NUM_PROBLEMS = 3;
 	// final static int NUM_RUNS = 30, SECONDS = 5;
-	final static int NUM_RUNS = 2, MILLISECONDS = 100;
+	final static int NUM_RUNS = 5;
+	final static Duration TIME_LIMIT = Duration.millis(10000);
 
 	/**
 	 * The test main
@@ -50,23 +51,24 @@ public class MaximumAreaTest {
 	public static void main(String[] args) throws Exception {
 		List<Problem> problems = new ArrayList<Problem>();
 		for (int p = 1; p <= NUM_PROBLEMS; p++) {
-			problems.add(MaximumAreaTest.loadProblem(p));
+			problems.add(makeProblem((int) Math.pow(2, 2 + p)));
 		}
 		
 
 		// now do a run for the iteration limit
 		System.out.println("JIT PRIMING AND COUNTING ITERATIONS");
-		ArrayList<TrainResults> results = doRunAll(new ProblemRun(problems.get(0), null, null, 0, new TimeLimit(Duration.millis(MaximumAreaTest.MILLISECONDS))));
-		int[] iterationLimits = new int[results.size()];
-		for (int i = 0; i < results.size(); i++) {
-			iterationLimits[i] = results.get(i).iterations;
-			//System.out.println("iterationLimits[" + i + "]: " + iterationLimits[i]);
-		}
+		doRunAll(new ProblemRun(problems.get(0), null, null, 0, new TimeLimit(Duration.millis(100))));
+//		int[] iterationLimits = new int[results.size()];
+//		for (int i = 0; i < results.size(); i++) {
+//			iterationLimits[i] = results.get(i).iterations;
+//			//System.out.println("iterationLimits[" + i + "]: " + iterationLimits[i]);
+//		}
 		System.out.println("DONE JIT PRIMING AND COUNTING ITERATIONS");
 		
 		// run each of them for a fixed period of time
 		for (Problem problem : problems) {
-			TestRunner.doProblemPeriodicTrace(problem, iterationLimits, NUM_RUNS, new ProblemRunner() {
+			System.out.println("---------------- RUNNING PROBLEM: " + problem.getProblemName());
+			TestRunner.doProblemPeriodicTrace(problem, TIME_LIMIT, NUM_RUNS, new ProblemRunner() {
 				public ArrayList<TrainResults> runAll(ProblemRun problemRun) throws FileNotFoundException {
 					return doRunAll(problemRun);
 				}
@@ -88,15 +90,25 @@ public class MaximumAreaTest {
 					15, // MIMIC200 x200
 					10  // MIMIC300 x300
 					};
-			TestRunner.doProblemAllIterationsTrace(problem, iters, 1, NUM_RUNS, new ProblemRunner() {
+			System.out.println("---------------- RUNNING PROBLEM: " + problem.getProblemName());
+			TestRunner.doProblemAllIterationsTrace(problem, iters, 1, NUM_RUNS, new TestRunner.ProblemRunner() {
 				public ArrayList<TrainResults> runAll(ProblemRun problemRun) throws FileNotFoundException {
 					return doRunAll(problemRun);
 				}
 			});
 			problem.setProblemName(oldName);
 		}
-	
+		System.out.println("____COMPLETE_____");
 	}
+
+	static Problem makeProblem(int p) throws IOException {
+		String problemName = "GOLMaximizationTest_" + p;
+		String problemDataFilename = problemName + ".csv";
+		System.out.println("Loaded " + problemDataFilename);
+		Problem problem = new GOLMaximizationProblem(p, p, p, problemName);
+		return problem;
+	}
+
 
 	static ArrayList<TrainResults> doRunAll(ProblemRun runParameters)
 			throws FileNotFoundException {
@@ -115,19 +127,19 @@ public class MaximumAreaTest {
 	private static ParameterizedAlgorithmRun makeHCPRun(ProblemRun runParameters) {
 		EvaluationFunction ef = runParameters.problem.getEvaluationFunction();
 		Distribution odd = runParameters.problem.getDistribution();
-		return new ParameterizedAlgorithmRun(new ParameterizedAlgorithm(ef, new RandomizedHillClimbing(makeHCP(ef,  odd))), runParameters);
+		return new ParameterizedAlgorithmRun(new ParameterizedAlgorithm(ef, new RandomizedHillClimbing(makeHCP(ef,  odd, runParameters.problem.getRanges()))), runParameters);
 	}
 
 	private static ParameterizedAlgorithmRun makeHCPWRRun(ProblemRun runParameters, int restartInterval) {
 		EvaluationFunction ef = runParameters.problem.getEvaluationFunction();
 		Distribution odd = runParameters.problem.getDistribution();
-		return new ParameterizedAlgorithmRun(new ParameterizedAlgorithm(ef, new RandomizedHillClimbingWithRestart(makeHCP(ef,  odd), restartInterval)), runParameters);
+		return new ParameterizedAlgorithmRun(new ParameterizedAlgorithm(ef, new RandomizedHillClimbingWithRestart(makeHCP(ef, odd, runParameters.problem.getRanges()), restartInterval)), runParameters);
 	}
 
 	private static ParameterizedAlgorithmRun makeSARun(ProblemRun runParameters, double t, double cooling) {
 		EvaluationFunction ef = runParameters.problem.getEvaluationFunction();
 		Distribution odd = runParameters.problem.getDistribution();
-		return new ParameterizedAlgorithmRun(new ParameterizedAlgorithm(ef, new SimulatedAnnealing(t, cooling, makeHCP(ef,  odd))), runParameters);
+		return new ParameterizedAlgorithmRun(new ParameterizedAlgorithm(ef, new SimulatedAnnealing(t, cooling, makeHCP(ef, odd, runParameters.problem.getRanges()))), runParameters);
 	}
 
 	private static ParameterizedAlgorithmRun makeSGARun(ProblemRun runParameters, int populationSize, int toMate, int toMutate) {
@@ -141,13 +153,15 @@ public class MaximumAreaTest {
 		return new ParameterizedAlgorithmRun(new ParameterizedAlgorithm(ef, new MIMIC(samples, toKeep, createMIMICPOP(runParameters.problem.getRanges(), ef))), runParameters);
 	}
 
-	private static HillClimbingProblem makeHCP(EvaluationFunction ef, Distribution odd) {
-		NeighborFunction nf = new SwapNeighbor();
+	private static HillClimbingProblem makeHCP(EvaluationFunction ef, Distribution odd, int[] ranges) {
+		//NeighborFunction nf = new SwapNeighbor();
+		NeighborFunction nf = new DiscreteChangeOneNeighbor(ranges); 
 		HillClimbingProblem hcp = new GenericHillClimbingProblem(ef, odd, nf);
 		return hcp;
 	}
 
 	private static GeneticAlgorithmProblem makeGAP(int[] ranges, EvaluationFunction ef, Distribution odd) {
+		// TODO: See what effect changing these has
 		MutationFunction mf = new SwapMutation();
 		CrossoverFunction cf = new OrderedCrossOver(ranges.length);
 		GeneticAlgorithmProblem gap = new GenericGeneticAlgorithmProblem(ef, odd, mf, cf);
@@ -160,13 +174,5 @@ public class MaximumAreaTest {
 		ProbabilisticOptimizationProblem pop = new GenericProbabilisticOptimizationProblem(ef, odd, df);
 		return pop;
 	}
-
-	static Problem loadProblem(int p) throws IOException {
-		String problemName = "MaximumAreaTest_" + p * 10;
-		String problemDataFilename = problemName + ".csv";
-		double[][] points = TestRunner.loadProblemData(problemDataFilename);
-		System.out.println("Loaded " + problemDataFilename + " " + points.length);
-		Problem problem = new MaximumAreaProblem(points, problemName);
-		return problem;
-	}
+	
 }
