@@ -3,7 +3,10 @@ package opt.test;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.joda.time.Duration;
 
@@ -38,8 +41,9 @@ import opt.test.TestRunner.ProblemRunner;
 public class GOLMaximizationTest {
 	final static int NUM_PROBLEMS = 3;
 	// final static int NUM_RUNS = 30, SECONDS = 5;
-	final static int NUM_RUNS = 5;
-	final static Duration TIME_LIMIT = Duration.millis(10000);
+	//final static Duration TIME_LIMIT = Duration.millis(10000);
+	final static int NUM_RUNS = 2;
+	final static Duration TIME_LIMIT = Duration.millis(1000);
 
 	/**
 	 * The test main
@@ -49,6 +53,16 @@ public class GOLMaximizationTest {
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
+		
+        Thread.setDefaultUncaughtExceptionHandler(
+                new Thread.UncaughtExceptionHandler() {
+                    @Override public void uncaughtException(Thread t, Throwable e) {
+                        System.err.println("Uncaught thread exception: " + t.getName());
+                    	e.printStackTrace();
+                        System.exit(1);
+                    }
+                });
+		
 		List<Problem> problems = new ArrayList<Problem>();
 		for (int p = 1; p <= NUM_PROBLEMS; p++) {
 			problems.add(makeProblem((int) Math.pow(2, 2 + p)));
@@ -67,32 +81,31 @@ public class GOLMaximizationTest {
 		
 		// run each of them for a fixed period of time
 		for (Problem problem : problems) {
-			System.out.println("---------------- RUNNING PROBLEM: " + problem.getProblemName());
+			System.out.println("---------------- RUNNING PROBLEM: " + problem.getProblemName() + " WITH TIME LIMIT: " + TIME_LIMIT);
 			TestRunner.doProblemPeriodicTrace(problem, TIME_LIMIT, NUM_RUNS, new ProblemRunner() {
-				public ArrayList<TrainResults> runAll(ProblemRun problemRun) throws FileNotFoundException {
+				public ArrayList<TrainResults> runAll(ProblemRun problemRun) throws Exception {
 					return doRunAll(problemRun);
 				}
 			});
 		}
 
-		// run each of them for 100 iterations (to show how MIMIC is better for expensive fitness functions)
+		// run each of them for 3000 iterations (to show how MIMIC is better for expensive fitness functions)
 		// but have to adjust for the populations used.
 		for (Problem problem : problems) {
 			String oldName = problem.getProblemName();
 			problem.setProblemName(problem.getProblemName() + "_limited_iterations");
-			int[] iters = new int[]{
-					3000, // RHC x1 
-					3000, // RHCWR x1 
-					3000, // SA.95 x1 
-					3000, // SA.99 x1 
-					15, // GA200 x200 
-					15, // GA200 x200
-					15, // MIMIC200 x200
-					10  // MIMIC300 x300
-					};
-			System.out.println("---------------- RUNNING PROBLEM: " + problem.getProblemName());
+			Map<String, Integer> iters = new HashMap<String, Integer>();
+			iters.put("RHC", 3000);
+			iters.put("RHCWR_6000", 3000);
+			iters.put("SA_0.95", 3000);
+			iters.put("SA_0.93", 3000);
+			iters.put("GA_200_150_20", 15);
+			iters.put("GA_300_270_10", 10);
+			iters.put("MIMIC_200_100", 15);
+			iters.put("MIMIC_300_50", 10);
+			System.out.println("---------------- RUNNING PROBLEM: " + problem.getProblemName() + " WITH FIXED ITERATIONS");
 			TestRunner.doProblemAllIterationsTrace(problem, iters, 1, NUM_RUNS, new TestRunner.ProblemRunner() {
-				public ArrayList<TrainResults> runAll(ProblemRun problemRun) throws FileNotFoundException {
+				public ArrayList<TrainResults> runAll(ProblemRun problemRun) throws Exception {
 					return doRunAll(problemRun);
 				}
 			});
@@ -111,16 +124,19 @@ public class GOLMaximizationTest {
 
 
 	static ArrayList<TrainResults> doRunAll(ProblemRun runParameters)
-			throws FileNotFoundException {
-		ArrayList<TrainResults> results = new ArrayList<TrainResults>();
-		results.add(makeHCPRun(runParameters).doTrainAndRecord());
-		results.add(makeHCPWRRun(runParameters, 6000).doTrainAndRecord());
-		results.add(makeSARun(runParameters, 1E12, .95).doTrainAndRecord());
-		results.add(makeSARun(runParameters, 1E12, .99).doTrainAndRecord());
-		results.add(makeSGARun(runParameters, 200, 150, 20).doTrainAndRecord());
-		results.add(makeSGARun(runParameters, 200, 180, 10).doTrainAndRecord());
-		results.add(makeMIMICRun(runParameters, 200, 100).doTrainAndRecord());
-		results.add(makeMIMICRun(runParameters, 300, 50).doTrainAndRecord());
+			throws Exception {
+		List<ParameterizedAlgorithmRun> runs = new ArrayList<ParameterizedAlgorithmRun>();
+		runs.add(makeHCPRun(runParameters));
+		runs.add(makeHCPWRRun(runParameters, 6000));
+		runs.add(makeSARun(runParameters, 1E12, .95));
+		runs.add(makeSARun(runParameters, 1E12, .93));
+		runs.add(makeSGARun(runParameters, 200, 150, 20));
+		runs.add(makeSGARun(runParameters, 300, 270, 10));
+		runs.add(makeMIMICRun(runParameters, 200, 100));
+		runs.add(makeMIMICRun(runParameters, 300, 50));
+		
+		ArrayList<TrainResults> results = TestRunner.runInParallel(runs);
+
 		return results;
 	}
 

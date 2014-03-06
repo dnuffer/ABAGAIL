@@ -1,22 +1,32 @@
 package opt.test;
 
+import java.util.Map;
 
 public class MultiRunIterationLimit implements TrainingTerminationCondition {
-	private int[] iterationLimits;
-	private int run = -1;
-	private int iteration = 0;
-	public MultiRunIterationLimit(int[] iterationLimits) {
-		this.iterationLimits = iterationLimits;
+	private final Map<String, Integer> limits;
+
+	public MultiRunIterationLimit(Map<String, Integer> limits) {
+		this.limits = limits;
 	}
+
 	@Override
-	public void start() {
-		run = (run + 1) % iterationLimits.length;
-		iteration = 0;
+	public TrainingTerminationState start(ParameterizedAlgorithm pa) {
+		if (!limits.containsKey(pa.getShortName())) {
+			throw new IllegalArgumentException("pa.getShortName(): " + pa.getShortName() + " is not valid");
+		}
+		return new MultiRunIterationLimitState(limits.get(pa.getShortName()));
 	}
-	@Override
-	public boolean shouldContinue(ParameterizedAlgorithmRun algRun) {
-		iteration++;
-		return iteration < iterationLimits[run];
+
+	private class MultiRunIterationLimitState implements TrainingTerminationState {
+		private final int limit;
+		public MultiRunIterationLimitState(int limit) {
+			this.limit = limit;
+		}
+		private int iteration = 0;
+		@Override
+		public boolean shouldContinue(ParameterizedAlgorithmRun algRun) {
+			iteration++;
+			return iteration < limit;
+		}
 	}
-	
 }

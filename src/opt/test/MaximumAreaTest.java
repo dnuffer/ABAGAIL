@@ -3,7 +3,10 @@ package opt.test;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.joda.time.Duration;
 
@@ -39,6 +42,7 @@ public class MaximumAreaTest {
 	final static int NUM_PROBLEMS = 5;
 	// final static int NUM_RUNS = 30, SECONDS = 5;
 	final static int NUM_RUNS = 2, MILLISECONDS = 100;
+	private static final Duration TIME_LIMIT = Duration.millis(MaximumAreaTest.MILLISECONDS);
 
 	/**
 	 * The test main
@@ -48,6 +52,15 @@ public class MaximumAreaTest {
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
+        Thread.setDefaultUncaughtExceptionHandler(
+                new Thread.UncaughtExceptionHandler() {
+                    @Override public void uncaughtException(Thread t, Throwable e) {
+                        System.err.println("Uncaught thread exception: " + t.getName());
+                    	e.printStackTrace();
+                        System.exit(1);
+                    }
+                });
+
 		List<Problem> problems = new ArrayList<Problem>();
 		for (int p = 1; p <= NUM_PROBLEMS; p++) {
 			problems.add(MaximumAreaTest.loadProblem(p));
@@ -56,7 +69,7 @@ public class MaximumAreaTest {
 
 		// now do a run for the iteration limit
 		System.out.println("JIT PRIMING AND COUNTING ITERATIONS");
-		ArrayList<TrainResults> results = doRunAll(new ProblemRun(problems.get(0), null, null, 0, new TimeLimit(Duration.millis(MaximumAreaTest.MILLISECONDS))));
+		ArrayList<TrainResults> results = doRunAll(new ProblemRun(problems.get(0), null, null, 0, new TimeLimit(TIME_LIMIT)));
 		int[] iterationLimits = new int[results.size()];
 		for (int i = 0; i < results.size(); i++) {
 			iterationLimits[i] = results.get(i).iterations;
@@ -66,8 +79,8 @@ public class MaximumAreaTest {
 		
 		// run each of them for a fixed period of time
 		for (Problem problem : problems) {
-			TestRunner.doProblemPeriodicTrace(problem, iterationLimits, NUM_RUNS, new ProblemRunner() {
-				public ArrayList<TrainResults> runAll(ProblemRun problemRun) throws FileNotFoundException {
+			TestRunner.doProblemPeriodicTrace(problem, TIME_LIMIT, NUM_RUNS, new ProblemRunner() {
+				public ArrayList<TrainResults> runAll(ProblemRun problemRun) throws Exception {
 					return doRunAll(problemRun);
 				}
 			});
@@ -78,18 +91,19 @@ public class MaximumAreaTest {
 		for (Problem problem : problems) {
 			String oldName = problem.getProblemName();
 			problem.setProblemName(problem.getProblemName() + "_limited_iterations");
-			int[] iters = new int[]{
-					3000, // RHC x1 
-					3000, // RHCWR x1 
-					3000, // SA.95 x1 
-					3000, // SA.99 x1 
-					15, // GA200 x200 
-					15, // GA200 x200
-					15, // MIMIC200 x200
-					10  // MIMIC300 x300
-					};
+
+			Map<String, Integer> iters = new HashMap<String, Integer>();
+			iters.put("RHC", 3000);
+			iters.put("RHCWR_6000", 3000);
+			iters.put("SA_0.95", 3000);
+			iters.put("SA_0.99", 3000);
+			iters.put("GA_200_150_20", 15);
+			iters.put("GA_200_180_10", 15);
+			iters.put("MIMIC_200_100", 15);
+			iters.put("MIMIC_300_50", 10);
+			
 			TestRunner.doProblemAllIterationsTrace(problem, iters, 1, NUM_RUNS, new ProblemRunner() {
-				public ArrayList<TrainResults> runAll(ProblemRun problemRun) throws FileNotFoundException {
+				public ArrayList<TrainResults> runAll(ProblemRun problemRun) throws Exception {
 					return doRunAll(problemRun);
 				}
 			});
@@ -98,17 +112,18 @@ public class MaximumAreaTest {
 	
 	}
 
-	static ArrayList<TrainResults> doRunAll(ProblemRun runParameters)
-			throws FileNotFoundException {
-		ArrayList<TrainResults> results = new ArrayList<TrainResults>();
-		results.add(makeHCPRun(runParameters).doTrainAndRecord());
-		results.add(makeHCPWRRun(runParameters, 6000).doTrainAndRecord());
-		results.add(makeSARun(runParameters, 1E12, .95).doTrainAndRecord());
-		results.add(makeSARun(runParameters, 1E12, .99).doTrainAndRecord());
-		results.add(makeSGARun(runParameters, 200, 150, 20).doTrainAndRecord());
-		results.add(makeSGARun(runParameters, 200, 180, 10).doTrainAndRecord());
-		results.add(makeMIMICRun(runParameters, 200, 100).doTrainAndRecord());
-		results.add(makeMIMICRun(runParameters, 300, 50).doTrainAndRecord());
+	static ArrayList<TrainResults> doRunAll(ProblemRun runParameters) throws Exception {
+		ArrayList<ParameterizedAlgorithmRun> runs = new ArrayList<ParameterizedAlgorithmRun>();
+		runs.add(makeHCPRun(runParameters));
+		runs.add(makeHCPWRRun(runParameters, 6000));
+		runs.add(makeSARun(runParameters, 1E12, .95));
+		runs.add(makeSARun(runParameters, 1E12, .99));
+		runs.add(makeSGARun(runParameters, 200, 150, 20));
+		runs.add(makeSGARun(runParameters, 200, 180, 10));
+		runs.add(makeMIMICRun(runParameters, 200, 100));
+		runs.add(makeMIMICRun(runParameters, 300, 50));
+		ArrayList<TrainResults> results = TestRunner.runInParallel(runs);
+
 		return results;
 	}
 

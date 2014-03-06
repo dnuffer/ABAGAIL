@@ -5,16 +5,24 @@ import org.joda.time.Duration;
 
 public class TimeLimit implements TrainingTerminationCondition {
 	private Duration timeLimit;
-	private DateTime end;
+
 	public TimeLimit(Duration timeLimit) {
 		this.timeLimit = timeLimit;
 	}
+
 	@Override
-	public void start() {
-		end = DateTime.now().plus(timeLimit);
+	public TrainingTerminationState start(ParameterizedAlgorithm pa) {
+		return new TimeLimitState(timeLimit);
 	}
-	@Override
-	public boolean shouldContinue(ParameterizedAlgorithmRun run) {
-		return end.isAfterNow();
+
+	private class TimeLimitState implements TrainingTerminationState {
+		private DateTime end;
+		public TimeLimitState(Duration timeLimit) {
+			end = DateTime.now().plus(timeLimit);			
+		}
+		@Override
+		public boolean shouldContinue(ParameterizedAlgorithmRun run) {
+			return end.isAfterNow();
+		}
 	}
 }

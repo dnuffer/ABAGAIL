@@ -8,7 +8,7 @@ public class ResultCSVWriter implements ResultHandler, AutoCloseable {
 		this.results_csv = results_csv;
 		results_csv.print("Algorithm,Run,BestFitness,Time,Iterations,BestIteration,SecondsPerIteration\n");
 	}
-	public void handle(String shortName, int run, double optimalFitness, double seconds, int iterations, int bestIteration) {
+	public synchronized void handle(String shortName, int run, double optimalFitness, double seconds, int iterations, int bestIteration) {
 		results_csv.print(shortName + "," + run + "," + optimalFitness + "," + seconds + "," + iterations + ","
 				+ bestIteration + "," + seconds / iterations + "\n");
 		results_csv.flush();

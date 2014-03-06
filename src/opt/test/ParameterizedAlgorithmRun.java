@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 
 import opt.OptimizationAlgorithm;
 import shared.Instance;
+import shared.Tracer;
 
 public class ParameterizedAlgorithmRun extends OptimizationAlgorithm {
 		ParameterizedAlgorithm pa;
@@ -58,17 +59,19 @@ public class ParameterizedAlgorithmRun extends OptimizationAlgorithm {
 			int bestIteration = 0;
 			double best = Double.MIN_VALUE;
 						
-			pr.termination.start();
-			if (pr.traces_output != null) {
-				pr.traces_output.start(pa.getShortName(), pr.run);
+			TrainingTerminationState termination = pr.termination.start(pa);
+			Tracer tracer = null;
+			if (pr.tracerFactory != null) {
+				tracer = pr.tracerFactory.start(pa.getShortName(), pr.run);
 			}
 			
-			while (pr.termination.shouldContinue(this)) {
+			// never want less than 2 iterations
+			while (termination.shouldContinue(this) || iterations < 2) {
 				iterations++;
 				value = train();
 				
-				if (pr.traces_output != null) {
-					pr.traces_output.trace(iterations, getOptimalFitnessValue(), value);
+				if (tracer != null) {
+					tracer.trace(iterations, getOptimalFitnessValue(), value);
 				}
 				
 				if (value > best) {
