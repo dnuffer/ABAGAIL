@@ -72,11 +72,6 @@ public class GOLMaximizationTest {
 		// now do a run for the iteration limit
 		System.out.println("JIT PRIMING AND COUNTING ITERATIONS");
 		doRunAll(new ProblemRun(problems.get(0), null, null, 0, new TimeLimit(Duration.millis(100))));
-//		int[] iterationLimits = new int[results.size()];
-//		for (int i = 0; i < results.size(); i++) {
-//			iterationLimits[i] = results.get(i).iterations;
-//			//System.out.println("iterationLimits[" + i + "]: " + iterationLimits[i]);
-//		}
 		System.out.println("DONE JIT PRIMING AND COUNTING ITERATIONS");
 		
 		// run each of them for a fixed period of time

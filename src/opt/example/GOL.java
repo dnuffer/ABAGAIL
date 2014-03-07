@@ -115,9 +115,9 @@ public class GOL {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		for (int x = 0; x < boardWidth; x++) {
-			for (int y = 0; y < boardHeight; y++) {
+		StringBuilder sb = new StringBuilder(boardHeight * (boardWidth + 1));
+		for (int y = 0; y < boardHeight; y++) {
+			for (int x = 0; x < boardWidth; x++) {
 				sb.append(getCell(x, y) ? 'O' : '.');
 			}
 			sb.append('\n');
